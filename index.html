@@ -1,131 +1,503 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Mon Voyage Volontariat</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      scroll-behavior: smooth;
-      background: #1f2d2b;
-      color: white;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Voyage Workaway</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    section {
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      padding: 40px;
-      text-align: center;
-    }
+:root {
+  --ink:    #16150f;
+  --sand:   #f2ede2;
+  --mist:   #e8e2d6;
+  --gold:   #c9a96b;
+  --goldf:  #e8c98a;
+  --moss:   #3b5738;
+  --mossL:  #527a4e;
+  --warm:   #9c7a4a;
+}
 
-    h1 {
-      font-size: 3em;
-      margin-bottom: 20px;
-    }
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--ink);
+  font-family: 'Jost', sans-serif;
+  cursor: none;
+}
 
-    p, li {
-      font-size: 1.5em;
-    }
+/* ── cursor ── */
+#cur  { position:fixed; width:7px; height:7px; border-radius:50%; background:var(--gold); pointer-events:none; z-index:9999; transform:translate(-50%,-50%); mix-blend-mode:difference; }
+#curR { position:fixed; width:28px; height:28px; border:1px solid rgba(201,169,107,.35); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:left .12s ease,top .12s ease; }
 
-    ul {
-      list-style: none;
-      padding: 0;
-    }
+/* ── slide engine ── */
+#deck { position:fixed; inset:0; }
+.slide { position:absolute; inset:0; opacity:0; pointer-events:none; transition:opacity .9s cubic-bezier(.4,0,.2,1); overflow:hidden; }
+.slide.active { opacity:1; pointer-events:all; }
 
-    .slide {
-      opacity: 0;
-      transform: translateY(50px);
-      transition: all 0.8s ease;
-    }
+/* ── UI chrome ── */
+#pager {
+  position:fixed; bottom:2rem; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:10px; z-index:200;
+}
+.dot { width:5px; height:5px; border-radius:50%; border:1px solid rgba(201,169,107,.4); background:transparent; cursor:none; transition:all .3s; }
+.dot.on { background:var(--gold); border-color:var(--gold); transform:scale(1.5); }
 
-    .slide.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
+#arrows { position:fixed; bottom:1.65rem; right:2rem; display:flex; gap:.4rem; z-index:200; }
+.arr {
+  width:38px; height:38px; border-radius:50%; border:1px solid rgba(201,169,107,.25);
+  background:transparent; color:var(--gold); font-size:.9rem; display:flex;
+  align-items:center; justify-content:center; cursor:none; transition:all .3s;
+}
+.arr:hover { border-color:var(--gold); background:rgba(201,169,107,.08); }
 
-    nav {
-      position: fixed;
-      top: 10px;
-      right: 20px;
-    }
+#pgnum { position:fixed; top:1.8rem; right:2rem; font-size:.6rem; letter-spacing:3px; color:rgba(201,169,107,.4); z-index:200; font-weight:300; }
+#pgnum span { color:rgba(201,169,107,.7); }
 
-    nav a {
-      color: white;
-      margin-left: 15px;
-      text-decoration: none;
-    }
-  </style>
+/* noise grain */
+.grain::after {
+  content:''; position:absolute; inset:0; pointer-events:none; z-index:50; opacity:.35;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)' opacity='.06'/%3E%3C/svg%3E");
+}
+
+/* corner brackets */
+.brk { position:absolute; width:44px; height:44px; z-index:10; }
+.brk.tl { top:1.6rem; left:1.6rem; border-top:1px solid rgba(201,169,107,.3); border-left:1px solid rgba(201,169,107,.3); }
+.brk.tr { top:1.6rem; right:1.6rem; border-top:1px solid rgba(201,169,107,.3); border-right:1px solid rgba(201,169,107,.3); }
+.brk.bl { bottom:4rem; left:1.6rem; border-bottom:1px solid rgba(201,169,107,.3); border-left:1px solid rgba(201,169,107,.3); }
+.brk.br { bottom:4rem; right:1.6rem; border-bottom:1px solid rgba(201,169,107,.3); border-right:1px solid rgba(201,169,107,.3); }
+
+/* ═══════════════════════════
+   SLIDE 1 — COVER
+═══════════════════════════ */
+#s1 { background:var(--ink); display:flex; align-items:center; justify-content:center; }
+
+.s1-rings {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+}
+.s1-rings svg { width:100%; height:100%; opacity:.06; }
+
+.s1-body {
+  position:relative; z-index:5; text-align:center;
+  display:flex; flex-direction:column; align-items:center;
+}
+
+.s1-tag {
+  font-size:.6rem; letter-spacing:6px; text-transform:uppercase;
+  color:var(--gold); font-weight:300; opacity:0;
+  animation:up .8s .1s forwards;
+}
+.s1-line { width:1px; height:56px; background:linear-gradient(to bottom,transparent,var(--gold),transparent); margin:1.4rem auto; opacity:0; animation:fi 1s .5s forwards; }
+.s1-h1 {
+  font-family:'Cormorant Garamond',serif; font-size:clamp(3.5rem,8vw,7.5rem);
+  font-weight:300; color:var(--sand); line-height:.92; letter-spacing:-.02em;
+  opacity:0; animation:up 1s .3s forwards;
+}
+.s1-h1 em { font-style:italic; color:var(--goldf); }
+.s1-name {
+  margin-top:2rem; font-size:.65rem; letter-spacing:5px; text-transform:uppercase;
+  color:rgba(201,169,107,.45); font-weight:300; opacity:0; animation:up .8s .7s forwards;
+}
+
+/* ── EDIT: replace with your name & class ── */
+.editable { /* just change the text content in the HTML below */ }
+
+/* ═══════════════════════════
+   SLIDE 2 — LE VOYAGE
+   (type volontariat + pays)
+═══════════════════════════ */
+#s2 { background:var(--sand); display:grid; grid-template-columns:1fr 1fr; }
+
+.s2-left {
+  background:var(--moss); position:relative; display:flex;
+  flex-direction:column; justify-content:flex-end; padding:4rem 3.5rem;
+  overflow:hidden;
+}
+.s2-left .watermark {
+  font-family:'Cormorant Garamond',serif; font-size:16rem; font-weight:300;
+  font-style:italic; color:rgba(201,169,107,.06); position:absolute;
+  bottom:-3rem; left:-1rem; line-height:1; user-select:none; white-space:nowrap;
+}
+.s2-left .eyebrow {
+  font-size:.58rem; letter-spacing:5px; text-transform:uppercase;
+  color:rgba(201,169,107,.55); margin-bottom:1rem; font-weight:300;
+}
+.s2-left h2 {
+  font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,4vw,3.4rem);
+  font-weight:300; color:var(--sand); line-height:1.1;
+}
+.s2-left h2 em { font-style:italic; color:var(--goldf); }
+.s2-left .s2-divider { width:40px; height:1px; background:var(--gold); opacity:.4; margin:1.6rem 0; }
+.s2-left .s2-note { font-size:.75rem; color:rgba(242,237,226,.4); font-weight:300; line-height:1.8; }
+
+.s2-right {
+  display:flex; flex-direction:column; justify-content:center;
+  padding:4rem 3.5rem; gap:3rem; background:var(--sand);
+}
+
+.info-block {}
+.info-label {
+  font-size:.55rem; letter-spacing:5px; text-transform:uppercase;
+  color:var(--warm); margin-bottom:.6rem; font-weight:400;
+}
+.info-value {
+  font-family:'Cormorant Garamond',serif; font-size:clamp(1.6rem,3vw,2.4rem);
+  font-weight:300; color:var(--ink); line-height:1.1; font-style:italic;
+  border-bottom:1px solid rgba(26,21,15,.12); padding-bottom:.6rem;
+}
+.info-value.ph { /* placeholder style */
+  color:rgba(26,21,15,.25); font-style:normal; font-size:1rem;
+  letter-spacing:2px; font-family:'Jost',sans-serif; font-weight:200;
+}
+.info-sub {
+  font-size:.72rem; color:rgba(26,21,15,.35); margin-top:.4rem;
+  font-weight:300; line-height:1.6;
+}
+.info-sub.ph { color:rgba(26,21,15,.2); font-style:italic; }
+
+/* ═══════════════════════════
+   SLIDE 3 — HÔTE 1
+═══════════════════════════ */
+#s3 { background:var(--ink); display:flex; }
+
+.host-slide {
+  width:100%; display:grid; grid-template-columns:5fr 4fr; align-items:stretch;
+}
+
+.host-img-col {
+  position:relative; background:#1e1d15; overflow:hidden;
+  display:flex; align-items:flex-end;
+}
+.host-img-placeholder {
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:1rem;
+  border-right:1px solid rgba(201,169,107,.08);
+}
+.host-img-placeholder .ph-icon { font-size:3rem; opacity:.15; }
+.host-img-placeholder .ph-text {
+  font-size:.6rem; letter-spacing:4px; text-transform:uppercase;
+  color:rgba(201,169,107,.2); font-weight:300;
+}
+/* Once you have a photo, replace .host-img-placeholder with:
+   <img src="photo.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.7"> */
+
+.host-img-col .host-num {
+  position:absolute; bottom:3rem; left:3rem;
+  font-family:'Cormorant Garamond',serif; font-size:7rem; font-weight:300;
+  color:rgba(201,169,107,.08); line-height:1; user-select:none; z-index:2;
+}
+
+.host-info-col {
+  padding:4rem 3rem; display:flex; flex-direction:column;
+  justify-content:center; gap:2.2rem;
+  border-left:1px solid rgba(201,169,107,.08);
+}
+
+.host-badge {
+  display:inline-flex; align-items:center; gap:.5rem;
+  font-size:.55rem; letter-spacing:4px; text-transform:uppercase;
+  color:var(--gold); font-weight:300;
+}
+.host-badge::before { content:''; width:20px; height:1px; background:var(--gold); opacity:.5; }
+
+.host-name {
+  font-family:'Cormorant Garamond',serif; font-size:clamp(1.8rem,3vw,2.8rem);
+  font-weight:300; color:var(--sand); line-height:1.1; font-style:italic;
+}
+.host-name.ph { font-style:normal; font-size:1rem; letter-spacing:2px; color:rgba(242,237,226,.2); font-family:'Jost',sans-serif; font-weight:200; }
+
+.host-location {
+  font-size:.7rem; letter-spacing:3px; text-transform:uppercase;
+  color:rgba(201,169,107,.45); font-weight:300; margin-top:-.8rem;
+}
+.host-location.ph { color:rgba(201,169,107,.2); }
+
+.host-divider { width:32px; height:1px; background:var(--gold); opacity:.3; }
+
+.host-desc {
+  font-size:.85rem; color:rgba(242,237,226,.5); line-height:1.85; font-weight:300;
+  max-width:26ch;
+}
+.host-desc.ph { color:rgba(242,237,226,.18); font-style:italic; }
+
+.host-tags { display:flex; flex-wrap:wrap; gap:.5rem; }
+.tag {
+  font-size:.58rem; letter-spacing:2px; text-transform:uppercase; font-weight:300;
+  padding:.3rem .8rem; border:1px solid rgba(201,169,107,.2);
+  color:rgba(201,169,107,.5); border-radius:2px;
+}
+.tag.ph { color:rgba(201,169,107,.2); border-color:rgba(201,169,107,.1); }
+
+/* ═══════════════════════════
+   SLIDE 4 — HÔTE 2
+═══════════════════════════ */
+#s4 { background:var(--ink); display:flex; }
+
+/* reuses .host-slide, .host-img-col, etc. — mirrored layout */
+#s4 .host-slide { grid-template-columns:4fr 5fr; }
+#s4 .host-img-col { order:2; border-left:1px solid rgba(201,169,107,.08); border-right:none; }
+#s4 .host-info-col { order:1; border-right:1px solid rgba(201,169,107,.08); border-left:none; }
+
+/* ═══════════════════════════
+   SLIDE 5 — POURQUOI CE VOYAGE
+═══════════════════════════ */
+#s5 { background:var(--mist); display:grid; grid-template-rows:auto 1fr; }
+
+.s5-top {
+  padding:3.5rem 5rem 0;
+  display:flex; align-items:baseline; gap:2rem;
+  border-bottom:1px solid rgba(26,21,15,.1);
+  padding-bottom:2rem;
+}
+.s5-top-label { font-size:.58rem; letter-spacing:5px; text-transform:uppercase; color:var(--warm); font-weight:300; }
+.s5-top h2 {
+  font-family:'Cormorant Garamond',serif; font-size:clamp(2rem,4vw,3.5rem);
+  font-weight:300; color:var(--ink); line-height:1;
+}
+.s5-top h2 em { font-style:italic; color:var(--moss); }
+
+.s5-grid {
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  padding:3rem 5rem; gap:3rem; align-items:start;
+}
+
+.s5-card { display:flex; flex-direction:column; gap:1rem; }
+
+.s5-card-num {
+  font-family:'Cormorant Garamond',serif; font-size:3.5rem; font-weight:300;
+  color:rgba(26,21,15,.07); line-height:1; user-select:none;
+}
+.s5-card-label { font-size:.55rem; letter-spacing:4px; text-transform:uppercase; color:var(--moss); font-weight:400; }
+.s5-card-line { width:24px; height:1px; background:var(--gold); opacity:.5; }
+.s5-card-value {
+  font-family:'Cormorant Garamond',serif; font-size:1.3rem; font-weight:300;
+  color:var(--ink); line-height:1.4; font-style:italic;
+}
+.s5-card-value.ph { font-style:normal; font-size:.85rem; letter-spacing:2px; text-transform:uppercase; color:rgba(26,21,15,.2); font-family:'Jost',sans-serif; font-weight:200; }
+
+/* ═══════════════════════════
+   ANIMATIONS
+═══════════════════════════ */
+@keyframes up { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:none} }
+@keyframes fi { from{opacity:0} to{opacity:1} }
+
+.slide:not(.active) * { animation:none !important; }
+
+#s2.active .s2-left  { animation:up .8s .1s both; }
+#s2.active .s2-right { animation:up .8s .3s both; }
+.s2-left, .s2-right { opacity:0; }
+
+#s3.active .host-info-col { animation:up .8s .2s both; }
+#s3.active .host-img-col  { animation:fi .8s .1s both; }
+#s4.active .host-info-col { animation:up .8s .2s both; }
+#s4.active .host-img-col  { animation:fi .8s .1s both; }
+.host-img-col, .host-info-col { opacity:0; }
+
+#s5.active .s5-top  { animation:up .7s .1s both; }
+#s5.active .s5-card:nth-child(1) { animation:up .7s .2s both; }
+#s5.active .s5-card:nth-child(2) { animation:up .7s .35s both; }
+#s5.active .s5-card:nth-child(3) { animation:up .7s .5s both; }
+.s5-top, .s5-card { opacity:0; }
+</style>
 </head>
-
 <body>
 
-<nav>
-  <a href="#intro">Intro</a>
-  <a href="#type">Type</a>
-  <a href="#pays">Pays</a>
-  <a href="#hotes">Hôtes</a>
-  <a href="#raison">Pourquoi</a>
-</nav>
+<div id="cur"></div>
+<div id="curR"></div>
+<div id="pgnum"><span id="cn">01</span> / 05</div>
 
-<section id="intro" class="slide">
-  <h1>Mon Voyage 🌍</h1>
-  <p>Volontariat</p>
-</section>
+<div id="pager">
+  <div class="dot on" onclick="go(0)"></div>
+  <div class="dot" onclick="go(1)"></div>
+  <div class="dot" onclick="go(2)"></div>
+  <div class="dot" onclick="go(3)"></div>
+  <div class="dot" onclick="go(4)"></div>
+</div>
+<div id="arrows">
+  <button class="arr" onclick="prev()">←</button>
+  <button class="arr" onclick="next()">→</button>
+</div>
 
-<section id="type" class="slide">
-  <h1>Type</h1>
-  <ul>
-    <li>Écologie</li>
-    <li>Animaux</li>
-    <li>Communauté</li>
-  </ul>
-</section>
+<div id="deck">
 
-<section id="pays" class="slide">
-  <h1>Pays</h1>
-  <ul>
-    <li>Espagne 🇪🇸</li>
-    <li>Culture</li>
-    <li>Climat</li>
-  </ul>
-</section>
+  <!-- ══ SLIDE 1 — COVER ══ -->
+  <div class="slide grain active" id="s1">
+    <div class="brk tl"></div><div class="brk tr"></div>
+    <div class="brk bl"></div><div class="brk br"></div>
+    <div class="s1-rings">
+      <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="720" cy="450" rx="680" ry="370" stroke="#c9a96b" stroke-width="0.5"/>
+        <ellipse cx="720" cy="450" rx="580" ry="300" stroke="#c9a96b" stroke-width="0.5"/>
+        <ellipse cx="720" cy="450" rx="480" ry="234" stroke="#c9a96b" stroke-width="0.5"/>
+        <ellipse cx="720" cy="450" rx="380" ry="172" stroke="#c9a96b" stroke-width="0.5"/>
+        <ellipse cx="720" cy="450" rx="280" ry="114" stroke="#c9a96b" stroke-width="0.5"/>
+        <ellipse cx="720" cy="450" rx="180" ry="62"  stroke="#c9a96b" stroke-width="0.5"/>
+        <line x1="0" y1="450" x2="1440" y2="450" stroke="#c9a96b" stroke-width="0.3" stroke-dasharray="3 18"/>
+        <line x1="720" y1="0"   x2="720"  y2="900" stroke="#c9a96b" stroke-width="0.3" stroke-dasharray="3 18"/>
+      </svg>
+    </div>
+    <div class="s1-body">
+      <div class="s1-tag">Projet Workaway · 2024–2025</div>
+      <div class="s1-line"></div>
+      <h1 class="s1-h1">Mon<br><em>Voyage de</em><br>Volontariat</h1>
+      <div class="s1-name editable">Prénom Nom &nbsp;·&nbsp; Classe</div>
+    </div>
+  </div>
 
-<section id="hotes" class="slide">
-  <h1>Hôtes</h1>
-  <ul>
-    <li>Ferme bio 🌱</li>
-    <li>Auberge 🏡</li>
-  </ul>
-</section>
+  <!-- ══ SLIDE 2 — LE VOYAGE (type + pays) ══ -->
+  <div class="slide grain" id="s2">
+    <div class="s2-left">
+      <div class="watermark">voyage</div>
+      <div class="eyebrow">Mon voyage</div>
+      <h2>Le voyage<br>que j'ai<br><em>choisi</em></h2>
+      <div class="s2-divider"></div>
+      <div class="s2-note">Type de volontariat<br>& destination</div>
+    </div>
+    <div class="s2-right">
 
-<section id="raison" class="slide">
-  <h1>Pourquoi ?</h1>
-  <ul>
-    <li>Apprendre</li>
-    <li>Voyager</li>
-    <li>Nouvelles compétences</li>
-  </ul>
-</section>
+      <div class="info-block">
+        <div class="info-label">Type de volontariat</div>
+        <!-- ✏️ Replace "À COMPLÉTER" with your volunteer type e.g. "Agriculture biologique" -->
+        <div class="info-value" id="vol-type">Enseignement & projets IT</div>
+        <div class="info-sub" id="vol-desc">Aide pédagogique, technologie en classe, réseaux sociaux & création de contenu</div>
+      </div>
+
+      <div class="info-block">
+        <div class="info-label">Pays de destination</div>
+        <div class="info-value" id="pays">Népal</div>
+        <div class="info-sub" id="pays-desc">Bharatpur (Chitwan) · Kathmandu</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 3 — HÔTE 1 ══ -->
+  <div class="slide grain" id="s3">
+    <div class="host-slide">
+      <div class="host-img-col">
+        <div class="host-img-placeholder">
+          <!-- ✏️ To add a photo: remove this placeholder div and add:
+               <img src="photo-hote1.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.65"> -->
+          <div class="ph-icon">🏡</div>
+          <div class="ph-text">Photo de l'hôte</div>
+        </div>
+        <div class="host-num">1</div>
+      </div>
+      <div class="host-info-col">
+        <div class="host-badge">Hôte 01</div>
+        <!-- ✏️ Replace with host name from Workaway -->
+        <div class="host-name" id="h1-name">Jungle Nirvana Retreat</div>
+        <div class="host-location" id="h1-loc">Bharatpur, Chitwan — Népal</div>
+        <div class="host-divider"></div>
+        <div class="host-desc" id="h1-desc">Un retreat en construction en bordure du Parc National de Chitwan. Rhinos et cerfs visibles chaque jour. Ils cherchent de l'aide pour les réseaux sociaux, la création de contenu et le site web.</div>
+        <div class="host-tags">
+          <div class="tag">Réseaux sociaux</div>
+          <div class="tag">Création de contenu</div>
+          <div class="tag">Site web</div>
+          <div class="tag">Photographie</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 4 — HÔTE 2 ══ -->
+  <div class="slide grain" id="s4">
+    <div class="host-slide">
+      <div class="host-img-col">
+        <div class="host-img-placeholder">
+          <!-- ✏️ Same as slide 3 — add photo here -->
+          <div class="ph-icon">🏡</div>
+          <div class="ph-text">Photo de l'hôte</div>
+        </div>
+        <div class="host-num">2</div>
+      </div>
+      <div class="host-info-col">
+        <div class="host-badge">Hôte 02</div>
+        <!-- ✏️ Replace with second host name -->
+        <div class="host-name" id="h2-name">École — Échange Culturel</div>
+        <div class="host-location" id="h2-loc">Kathmandu — Népal</div>
+        <div class="host-divider"></div>
+        <div class="host-desc" id="h2-desc">Réseau d'écoles de la maternelle à la terminale, coordonné par Durga Sir. Ils cherchent des volontaires pour enseigner l'anglais et intégrer l'informatique dans les cours.</div>
+        <div class="host-tags">
+          <div class="tag">Enseignement</div>
+          <div class="tag">Informatique</div>
+          <div class="tag">Anglais</div>
+          <div class="tag">Échange culturel</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SLIDE 5 — POURQUOI CE VOYAGE ══ -->
+  <div class="slide grain" id="s5">
+    <div class="s5-top">
+      <div class="s5-top-label">Mon choix</div>
+      <h2>Pourquoi <em>ce voyage ?</em></h2>
+    </div>
+    <div class="s5-grid">
+
+      <div class="s5-card">
+        <div class="s5-card-num">01</div>
+        <div class="s5-card-label">La raison principale</div>
+        <div class="s5-card-line"></div>
+        <!-- ✏️ Why did you choose this type of volunteering? -->
+        <div class="s5-card-value" id="why1">Népalais d'origine, j'ai grandi en Belgique. Ce voyage est une façon de renouer avec mes racines et de découvrir mon pays autrement.</div>
+      </div>
+
+      <div class="s5-card">
+        <div class="s5-card-num">02</div>
+        <div class="s5-card-label">Ce que je vais apprendre</div>
+        <div class="s5-card-line"></div>
+        <div class="s5-card-value" id="learn">Mettre mes compétences IT au service d'une école et d'un retreat. Apprendre à enseigner, à créer du contenu, et à travailler dans un contexte différent.</div>
+      </div>
+
+      <div class="s5-card">
+        <div class="s5-card-num">03</div>
+        <div class="s5-card-label">Ce qui m'attire dans ce pays</div>
+        <div class="s5-card-line"></div>
+        <div class="s5-card-value" id="attract">Le Parc de Chitwan que j'ai visité plusieurs fois — et voir enfin le tigre du Bengale. Découvrir une école népalaise de l'intérieur. Retrouver la culture, la langue, la cuisine.</div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- /deck -->
 
 <script>
-  const slides = document.querySelectorAll('.slide');
+let cur = 0;
+const N = 5;
+const slides = [...document.querySelectorAll('.slide')];
+const dots   = [...document.querySelectorAll('.dot')];
+const cn     = document.getElementById('cn');
 
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-      }
-    });
-  });
+function go(i) {
+  slides[cur].classList.remove('active');
+  dots[cur].classList.remove('on');
+  cur = (i + N) % N;
+  slides[cur].classList.add('active');
+  dots[cur].classList.add('on');
+  cn.textContent = String(cur + 1).padStart(2, '0');
+}
+function next() { go(cur + 1); }
+function prev() { go(cur - 1); }
 
-  slides.forEach(slide => {
-    observer.observe(slide);
-  });
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); next(); }
+  if (['ArrowLeft','ArrowUp'].includes(e.key)) { e.preventDefault(); prev(); }
+});
+
+let tx = 0;
+document.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+document.addEventListener('touchend',   e => { const d = e.changedTouches[0].clientX - tx; if(d<-40) next(); if(d>40) prev(); });
+
+// cursor
+const c = document.getElementById('cur');
+const r = document.getElementById('curR');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; });
+(function loop(){ c.style.left=mx+'px'; c.style.top=my+'px'; rx+=(mx-rx)*.14; ry+=(my-ry)*.14; r.style.left=rx+'px'; r.style.top=ry+'px'; requestAnimationFrame(loop); })();
 </script>
-
 </body>
 </html>
